@@ -15,7 +15,7 @@ describe("BetCollector", function () {
 
     // const [owner, participant1, participant2] = await ethers.getSigners();
     const betCollectorFactory = await ethers.getContractFactory("BetCollector");
-    betCollector = (await betCollectorFactory.deploy(timeFinishAcceptingBets, timePriceUnveil)) as BetCollector;
+    betCollector = (await betCollectorFactory.deploy(timeFinishAcceptingBets, timePriceUnveil, 1)) as BetCollector;
     await betCollector.deployed();
   });
 
@@ -30,7 +30,7 @@ describe("BetCollector", function () {
     it("Pool size", async function () {
       const [, , participant2] = await ethers.getSigners();
 
-      await betCollector.connect(participant2).createBet(2000, { value: 1 });
+      await betCollector.connect(participant2).createBet(true, { value: 1 });
       expect(await betCollector.poolSize()).to.equal(ethers.utils.parseEther("1.8"));
     });
   });

@@ -10,13 +10,14 @@ contract BetCollector {
   error WinnerNotKnown();
   error AddressNotInWinningPool();
   error AddressNotPlaying();
+  error AddressAlreadyClaimed();
+  error ErrorWithPayment();
 
   uint256 timeFinishAcceptingBets;
   uint256 timePriceUnveil;
   uint256 priceThreshold;
   // address oracleFeed;
   uint256 commision = (10 * 1e18) / 100; //percent
-  uint256 public poolSize;
 
   address[] lowerBet;
   address[] greaterOrEqualBet;
@@ -24,15 +25,19 @@ contract BetCollector {
   bool greaterOrEqualWon;
   bool winnerKnown;
 
+  //wariables used to monitor how much reward pools and how much is left in the pool
   uint256 lowerPool;
   uint256 upperPool;
+
+  //populated after a we know a winner
+  uint256 lowerPoolMax;
+  uint256 upperPoolMax;
 
   struct Bet {
     uint256 moneyBet;
     bool moreOrEqual;
     bool active;
-    // uint256 timeBetPlaced;
-    // bool active;
+    bool prizePaid;
   }
 
   mapping(address => Bet) public bets;
@@ -65,8 +70,7 @@ contract BetCollector {
       lowerBet.push(msg.sender);
       lowerPool += poolIncrease;
     }
-    poolSize += poolIncrease;
-    bets[msg.sender] = Bet(poolIncrease, _greaterOrEqual, true);
+    bets[msg.sender] = Bet(poolIncrease, _greaterOrEqual, true, false);
   }
 
   function findWinner(uint256 currentPrice) public {
@@ -74,6 +78,9 @@ contract BetCollector {
       greaterOrEqualWon = true;
     }
     winnerKnown = true;
+
+    lowerPoolMax = lowerPool;
+    upperPoolMax = upperPool;
   }
 
   function withdrawPrize() public {
@@ -82,5 +89,19 @@ contract BetCollector {
       (greaterOrEqualWon == false && bets[msg.sender].moreOrEqual == true) ||
       (greaterOrEqualWon == true && bets[msg.sender].moreOrEqual == false)
     ) revert AddressNotInWinningPool();
+    if (bets[msg.sender].prizePaid == true) revert AddressAlreadyClaimed();
+
+    uint256 cut;
+    if (bets[msg.sender].moreOrEqual == true && greaterOrEqualWon == true) {
+      cut = ((bets[msg.sender].moneyBet * 10_000) / upperPoolMax / 10_000) * poolSize();
+    } else if (bets[msg.sender].moreOrEqual == false && greaterOrEqualWon == false) {
+      cut = ((bets[msg.sender].moneyBet * 10_000) / lowerPoolMax / 10_000) * poolSize();
+    }
+    (bool success, ) = (msg.sender).call{value: cut}("");
+    if (success == false) revert ErrorWithPayment();
+  }
+
+  function poolSize() public view returns (uint256) {
+    return lowerPool + upperPool;
   }
 }
