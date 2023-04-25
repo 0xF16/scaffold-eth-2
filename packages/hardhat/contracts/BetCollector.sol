@@ -17,21 +17,21 @@ contract BetCollector {
 
   uint256 timeFinishAcceptingBets;
   uint256 timePriceUnveil;
-  uint256 priceThreshold;
+  uint256 public priceThreshold;
   // address oracleFeed;
-  uint256 public commission = 10;
+  uint256 public commission = 10; //percent
 
   address[] lowerBet;
   address[] greaterOrEqualBet;
 
   bool public greaterOrEqualWon;
-  bool winnerKnown;
+  bool public winnerKnown;
 
   //wariables used to monitor how much reward pools and how much is left in the pool
-  uint256 lowerPool;
-  uint256 upperPool;
+  uint256 public lowerPool;
+  uint256 public upperPool;
 
-  //populated after a we know a winner
+  //populated after a we know a winner (helpers to calculate the rewards)
   uint256 lowerPoolMax;
   uint256 upperPoolMax;
 
@@ -53,19 +53,19 @@ contract BetCollector {
   }
 
   constructor(
-    uint256 _timeFinishAcceptingBets,
-    uint256 _timePriceUnveil,
+    // uint256 _timeFinishAcceptingBets,
+    // uint256 _timePriceUnveil,
     uint256 _priceThreshold /*, address _oracleFeed*/
   ) {
-    timeFinishAcceptingBets = _timeFinishAcceptingBets;
-    timePriceUnveil = _timePriceUnveil;
+    // timeFinishAcceptingBets = _timeFinishAcceptingBets;
+    // timePriceUnveil = _timePriceUnveil;
     priceThreshold = _priceThreshold;
     // oracleFeed = _oracleFeed;
   }
 
-  function createBet(bool _greaterOrEqual) public payable beforBettingDeadline {
+  function createBet(bool _greaterOrEqual) public payable {
     if (bets[msg.sender].active == true) revert AddressAlreadyPlacedBet();
-    uint256 poolIncrease = (msg.value * (100 * 1e18 * 100 - commission * 1e18 * 100)) / 10_000; //we multiply by 10_000 because we want to operate on bips
+    uint256 poolIncrease = (msg.value * (100 - commission) * 100) / 10_000; //we multiply by 100 because we want to operate on bips
     if (_greaterOrEqual) {
       greaterOrEqualBet.push(msg.sender);
       upperPool += poolIncrease;
@@ -76,6 +76,7 @@ contract BetCollector {
     bets[msg.sender] = Bet(poolIncrease, _greaterOrEqual, true, false);
   }
 
+  //TODO: constrain so it could be called after specific time
   function findWinner(uint256 currentPrice) public {
     if (winnerKnown == true) revert WinnerAlreadyKnown();
     if (currentPrice >= priceThreshold) {
@@ -95,13 +96,7 @@ contract BetCollector {
     ) revert AddressNotInWinningPool();
     if (bets[msg.sender].prizePaid == true) revert AddressAlreadyClaimed();
 
-    uint256 cut;
-    if (bets[msg.sender].moreOrEqual == true && greaterOrEqualWon == true) {
-      cut = ((bets[msg.sender].moneyBet * 10_000) / upperPoolMax / 10_000) * poolSize();
-    } else if (bets[msg.sender].moreOrEqual == false && greaterOrEqualWon == false) {
-      cut = ((bets[msg.sender].moneyBet * 10_000) / lowerPoolMax / 10_000) * poolSize();
-    }
-    (bool success, ) = (msg.sender).call{value: cut}("");
+    (bool success, ) = msg.sender.call{value: calculateCut(msg.sender)}("");
     if (success == false) revert ErrorWithPayment();
   }
 
@@ -111,10 +106,10 @@ contract BetCollector {
 
   function calculateCut(address addr) public view returns (uint256) {
     if (bets[addr].moreOrEqual == true) {
-      return (bets[addr].moneyBet * poolSize()) / upperPoolMax;
+      return ((((bets[addr].moneyBet * 100) / upperPoolMax) * poolSize()) / 100);
     } else if (bets[addr].moreOrEqual == false) {
-      return (bets[addr].moneyBet * poolSize()) / lowerPoolMax;
+      return ((((bets[addr].moneyBet * 100) / lowerPoolMax) * poolSize()) / 100);
     }
-    return 0;
+    revert AddressNotPlaying();
   }
 }
