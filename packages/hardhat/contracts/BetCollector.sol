@@ -8,6 +8,7 @@ contract BetCollector {
 
   error BetsImmutable();
   error WinnerNotKnown();
+  error WinnerAlreadyKnown();
   error AddressNotInWinningPool();
   error AddressNotPlaying();
   error AddressAlreadyClaimed();
@@ -18,7 +19,7 @@ contract BetCollector {
   uint256 timePriceUnveil;
   uint256 priceThreshold;
   // address oracleFeed;
-  uint256 commission = 10;
+  uint256 public commission = 10;
 
   address[] lowerBet;
   address[] greaterOrEqualBet;
@@ -72,10 +73,11 @@ contract BetCollector {
       lowerBet.push(msg.sender);
       lowerPool += poolIncrease;
     }
-    bets[msg.sender] = Bet(msg.value, _greaterOrEqual, true, false);
+    bets[msg.sender] = Bet(poolIncrease, _greaterOrEqual, true, false);
   }
 
   function findWinner(uint256 currentPrice) public {
+    if (winnerKnown == true) revert WinnerAlreadyKnown();
     if (currentPrice >= priceThreshold) {
       greaterOrEqualWon = true;
     }
@@ -105,5 +107,14 @@ contract BetCollector {
 
   function poolSize() public view returns (uint256) {
     return lowerPool + upperPool;
+  }
+
+  function calculateCut(address addr) public view returns (uint256) {
+    if (bets[addr].moreOrEqual == true) {
+      return (bets[addr].moneyBet * poolSize()) / upperPoolMax;
+    } else if (bets[addr].moreOrEqual == false) {
+      return (bets[addr].moneyBet * poolSize()) / lowerPoolMax;
+    }
+    return 0;
   }
 }
