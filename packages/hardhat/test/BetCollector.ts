@@ -15,7 +15,7 @@ describe("BetCollector", function () {
 
     // const [owner, participant1, participant2] = await ethers.getSigners();
     const betCollectorFactory = await ethers.getContractFactory("BetCollector");
-    betCollector = (await betCollectorFactory.deploy(timeFinishAcceptingBets, timePriceUnveil, 1)) as BetCollector;
+    betCollector = (await betCollectorFactory.deploy(timeFinishAcceptingBets, timePriceUnveil, 2000)) as BetCollector;
     await betCollector.deployed();
   });
 
@@ -27,11 +27,17 @@ describe("BetCollector", function () {
       const bet = await betCollector.bets(participant1.address);
       expect(bet.active).not.false;
     });
+
     it("Pool size", async function () {
       const [, , participant2] = await ethers.getSigners();
 
       await betCollector.connect(participant2).createBet(false, { value: 2 });
       expect(await betCollector.poolSize()).to.be.equal(ethers.utils.parseEther("2.7"));
+    });
+
+    it("Pick a winner", async function () {
+      await betCollector.findWinner(1800);
+      expect(await betCollector.greaterOrEqualWon()).to.be.equal(false);
     });
   });
 });

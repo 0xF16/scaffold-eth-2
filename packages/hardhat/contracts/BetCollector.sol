@@ -23,7 +23,7 @@ contract BetCollector {
   address[] lowerBet;
   address[] greaterOrEqualBet;
 
-  bool greaterOrEqualWon;
+  bool public greaterOrEqualWon;
   bool winnerKnown;
 
   //wariables used to monitor how much reward pools and how much is left in the pool
