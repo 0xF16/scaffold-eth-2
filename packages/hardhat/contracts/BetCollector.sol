@@ -12,12 +12,13 @@ contract BetCollector {
   error AddressNotPlaying();
   error AddressAlreadyClaimed();
   error ErrorWithPayment();
+  error AddressAlreadyPlacedBet();
 
   uint256 timeFinishAcceptingBets;
   uint256 timePriceUnveil;
   uint256 priceThreshold;
   // address oracleFeed;
-  uint256 commision = (10 * 1e18) / 100; //percent
+  uint256 commission = 10;
 
   address[] lowerBet;
   address[] greaterOrEqualBet;
@@ -62,7 +63,8 @@ contract BetCollector {
   }
 
   function createBet(bool _greaterOrEqual) public payable beforBettingDeadline {
-    uint256 poolIncrease = (msg.value * 10_000 * 1e18 - commision * 10_000) / 10_000; //we multiply by 10_000 because we want to operate on bips
+    if (bets[msg.sender].active == true) revert AddressAlreadyPlacedBet();
+    uint256 poolIncrease = (msg.value * (100 * 1e18 * 100 - commission * 1e18 * 100)) / 10_000; //we multiply by 10_000 because we want to operate on bips
     if (_greaterOrEqual) {
       greaterOrEqualBet.push(msg.sender);
       upperPool += poolIncrease;
@@ -70,7 +72,7 @@ contract BetCollector {
       lowerBet.push(msg.sender);
       lowerPool += poolIncrease;
     }
-    bets[msg.sender] = Bet(poolIncrease, _greaterOrEqual, true, false);
+    bets[msg.sender] = Bet(msg.value, _greaterOrEqual, true, false);
   }
 
   function findWinner(uint256 currentPrice) public {

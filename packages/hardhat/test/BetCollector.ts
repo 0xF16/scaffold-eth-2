@@ -30,8 +30,8 @@ describe("BetCollector", function () {
     it("Pool size", async function () {
       const [, , participant2] = await ethers.getSigners();
 
-      await betCollector.connect(participant2).createBet(true, { value: 1 });
-      expect(await betCollector.poolSize()).to.equal(ethers.utils.parseEther("1.8"));
+      await betCollector.connect(participant2).createBet(false, { value: 2 });
+      expect(await betCollector.poolSize()).to.be.equal(ethers.utils.parseEther("2.7"));
     });
   });
 });
