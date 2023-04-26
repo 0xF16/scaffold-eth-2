@@ -1,5 +1,16 @@
 # 🏗 Scaffold-ETH 2
 
+## Things learned
+
+- [x] how to write tests
+- [x] order of operations matter for precision
+
+## Plans to move forward
+
+- [ ] use chainlink for prices
+- [ ] mock prices for tests
+- [ ] use minimal proxies
+
 🧪 An open-source, up-to-date toolkit for building decentralized applications (dapps) on the Ethereum blockchain. It's designed to make it easier for developers to create and deploy smart contracts and build user interfaces that interact with those contracts.
 
 ⚙️ Built using NextJS, RainbowKit, Hardhat, Wagmi and Typescript.

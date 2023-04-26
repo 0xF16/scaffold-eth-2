@@ -32,7 +32,7 @@ describe("BetCollector", function () {
       const [, , participant2] = await ethers.getSigners();
 
       await betCollector.connect(participant2).createBet(false, { value: parseEther("2") });
-      expect(await betCollector.poolSize()).to.equal(parseEther("2.7"));
+      expect(await betCollector.poolSize()).to.equal(parseEther("3"));
     });
 
     it("Pick a winner", async function () {
@@ -57,9 +57,9 @@ describe("BetCollector", function () {
       )) as BetCollector;
       await betCollector.deployed();
       const [, participant1, participant2, participant3, participant4] = await ethers.getSigners();
-      await betCollector.connect(participant1).createBet(false, { value: parseEther("1") });
-      await betCollector.connect(participant2).createBet(false, { value: parseEther("2") });
-      await betCollector.connect(participant3).createBet(true, { value: parseEther("3") });
+      await betCollector.connect(participant1).createBet(false, { value: parseEther("7") });
+      await betCollector.connect(participant2).createBet(false, { value: parseEther("3") });
+      await betCollector.connect(participant3).createBet(true, { value: parseEther("6") });
       await betCollector.connect(participant4).createBet(true, { value: parseEther("4") });
     });
 
@@ -67,13 +67,13 @@ describe("BetCollector", function () {
       const [, , , participant3] = await ethers.getSigners();
 
       await betCollector.findWinner(2200);
-      expect(await betCollector.calculatePayout(participant3.address)).to.equal(parseEther("3.857142857142857142"));
+      expect(await betCollector.calculatePayout(participant3.address)).to.equal(parseEther("10.8"));
     });
     it("Lower bound wins", async () => {
       const [, , participant2] = await ethers.getSigners();
 
       await betCollector.findWinner(1800);
-      expect(await betCollector.calculatePayout(participant2.address)).to.equal(parseEther("6"));
+      expect(await betCollector.calculatePayout(participant2.address)).to.equal(parseEther("5.4"));
     });
     it("All winners claim reward", async () => {
       const [, , , participant3, participant4] = await ethers.getSigners();

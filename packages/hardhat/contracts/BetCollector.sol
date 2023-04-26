@@ -55,13 +55,12 @@ contract BetCollector {
 
   function createBet(bool _greaterOrEqual) public payable {
     if (bets[msg.sender].active == true) revert AddressAlreadyPlacedBet();
-    uint256 poolIncrease = (msg.value * (100 - commission) * 100) / 10_000; //we multiply by 100 because we want to operate on bips
     if (_greaterOrEqual) {
-      poolUpper += poolIncrease;
+      poolUpper += msg.value;
     } else {
-      poolLower += poolIncrease;
+      poolLower += msg.value;
     }
-    bets[msg.sender] = Bet(poolIncrease, _greaterOrEqual, true, false);
+    bets[msg.sender] = Bet(msg.value, _greaterOrEqual, true, false);
   }
 
   //TODO: constrain so it could be called after specific time
@@ -91,9 +90,9 @@ contract BetCollector {
 
   function calculatePayout(address addr) public view returns (uint256) {
     if (bets[addr].moreOrEqual == true) {
-      return ((((bets[addr].moneyBet * 100) * poolSize()) / poolUpper) / 100);
+      return ((poolSize() * ((bets[addr].moneyBet * 100) / poolUpper)) * ((100 - commission))) / 10_000;
     } else if (bets[addr].moreOrEqual == false) {
-      return ((((bets[addr].moneyBet * 100) * poolSize()) / poolLower) / 100);
+      return ((poolSize() * ((bets[addr].moneyBet * 100) / poolLower)) * ((100 - commission))) / 10_000;
     }
     revert AddressNotPlaying();
   }
