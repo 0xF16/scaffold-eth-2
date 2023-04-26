@@ -37,16 +37,16 @@ describe("BetCollector", function () {
 
     it("Pick a winner", async function () {
       await betCollector.findWinner(2200);
-      expect(await betCollector.greaterOrEqualWon()).to.equal(true);
+      expect(await betCollector.winnerUpperBound()).to.equal(true);
     });
 
-    it("Calculate cut", async function () {
+    it("Calculate payout", async function () {
       const [, participant1] = await ethers.getSigners();
-      expect(await betCollector.calculateCut(participant1.address)).to.equal(parseEther("2.7"));
+      expect(await betCollector.calculatePayout(participant1.address)).to.equal(parseEther("2.7"));
     });
   });
 
-  describe("Prize calculations and send", async () => {
+  describe("Prize calculations and send prizes", async () => {
     beforeEach(async () => {
       // const timeFinishAcceptingBets: number = (await time.latest()) + 24 * 60 * 60; //24h after mined block
       // const timePriceUnveil: number = timeFinishAcceptingBets + 24 * 60 * 60; //next 24h after previous time
@@ -67,13 +67,13 @@ describe("BetCollector", function () {
       const [, , , participant3] = await ethers.getSigners();
 
       await betCollector.findWinner(2200);
-      expect(await betCollector.calculateCut(participant3.address)).to.equal(parseEther("3.78"));
+      expect(await betCollector.calculatePayout(participant3.address)).to.equal(parseEther("3.857142857142857142"));
     });
     it("Lower bound wins", async () => {
       const [, , participant2] = await ethers.getSigners();
 
       await betCollector.findWinner(1800);
-      expect(await betCollector.calculateCut(participant2.address)).to.equal(parseEther("5.94"));
+      expect(await betCollector.calculatePayout(participant2.address)).to.equal(parseEther("6"));
     });
     it("All winners claim reward", async () => {
       const [, , , participant3, participant4] = await ethers.getSigners();
