@@ -2,10 +2,12 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
+import "hardhat/console.sol";
 
 contract BetCollector {
   AggregatorV3Interface internal priceFeed;
 
+  error AlreadyInitialized();
   error BetsImmutable();
   error WinnerNotKnown();
   error WinnerAlreadyKnown();
@@ -19,7 +21,8 @@ contract BetCollector {
   uint256 timePriceUnveil;
   uint256 public priceThreshold;
   // address oracleFeed;
-  uint256 public commission = 10; //percent
+  uint256 public commission;
+  bool initialized;
 
   bool public winnerUpperBound;
   bool public winnerKnown;
@@ -42,15 +45,21 @@ contract BetCollector {
     _;
   }
 
-  constructor(
-    // uint256 _timeFinishAcceptingBets,
-    // uint256 _timePriceUnveil,
-    uint256 _priceThreshold /*, address _oracleFeed*/
-  ) {
-    // timeFinishAcceptingBets = _timeFinishAcceptingBets;
-    // timePriceUnveil = _timePriceUnveil;
+  // constructor() // uint256 _timeFinishAcceptingBets,
+  // // uint256 _timePriceUnveil,
+  // // uint256 _priceThreshold /*, address _oracleFeed*/
+  // {
+  // timeFinishAcceptingBets = _timeFinishAcceptingBets;
+  // timePriceUnveil = _timePriceUnveil;
+  // priceThreshold = _priceThreshold;
+  // oracleFeed = _oracleFeed;
+  // }
+
+  function initialize(uint256 _priceThreshold) public {
+    if (initialized) revert AlreadyInitialized();
     priceThreshold = _priceThreshold;
-    // oracleFeed = _oracleFeed;
+    initialized = true;
+    commission = 10; //percent
   }
 
   function createBet(bool _greaterOrEqual) public payable {
