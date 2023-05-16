@@ -76,7 +76,7 @@ contract BetCollector {
   //TODO: constrain so it could be called after specific time
   function findWinner() public {
     if (winnerKnown == true) revert WinnerAlreadyKnown();
-    (uint80 roundID, int price, uint startedAt, uint timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
+    (, int price, , uint timeStamp, ) = priceFeed.latestRoundData(); //uint80 roundID, int price, uint startedAt, uint timeStamp, uint80 answeredInRound
     if (timeStamp == 0) revert OracleRoundNotFinished();
     if (price >= priceThreshold) {
       winnerUpperBound = true;
