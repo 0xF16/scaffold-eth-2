@@ -7,11 +7,13 @@ import "./BetCollector.sol";
 contract BetCollectorFactory {
   event NewClone(address cloneAddress);
 
-  address betCollector;
+  address betCollectorAddress;
   address[] public clones;
+  uint256 public commissionForNew;
 
-  constructor(address _addr) {
-    betCollector = _addr;
+  constructor(address _addr, uint256 _commissionForNew) {
+    betCollectorAddress = _addr;
+    commissionForNew = _commissionForNew;
   }
 
   function getClonesLength() public view returns (uint256) {
@@ -19,8 +21,14 @@ contract BetCollectorFactory {
   }
 
   function clone() public {
-    address newClone = Clones.clone(betCollector);
+    address newClone = Clones.clone(betCollectorAddress);
+    BetCollector betCollector = BetCollector(newClone);
+    betCollector.setCommission(commissionForNew);
     clones.push(newClone);
     emit NewClone(newClone);
+  }
+
+  function setNewCommission(uint256 _commissionForNew) public {
+    commissionForNew = _commissionForNew;
   }
 }

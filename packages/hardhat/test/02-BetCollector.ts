@@ -17,6 +17,7 @@ async function deployTestClone() {
   const betCollectorCloneFactory = await ethers.getContractFactory("BetCollectorFactory");
   const cloner: BetCollectorFactory = (await betCollectorCloneFactory.deploy(
     betCollector.address,
+    10,
   )) as BetCollectorFactory;
   await cloner.deployed();
 
@@ -80,6 +81,22 @@ describe("BetCollector", async function () {
 
       await cloneInstance.findWinner();
       expect(await cloneInstance.calculatePayout(participant1.address)).to.equal(parseEther("2.7"));
+    });
+    it("Old commission values for contract before new setNewCommission is executed", async () => {
+      const { cloneFactory } = await loadFixture(deployTestClone);
+      await cloneFactory.setNewCommission(20);
+      await cloneFactory.clone();
+      const formerCloneAddress: Address = await cloneFactory.clones(0); //at 0 it was the address created by the fixture
+      const formerClone: BetCollector = await ethers.getContractAt("BetCollector", formerCloneAddress);
+      expect(await formerClone.commission()).to.be.equal(10);
+    });
+    it("New commission value from the factory contract for new contracts", async () => {
+      const { cloneFactory } = await loadFixture(deployTestClone);
+      await cloneFactory.setNewCommission(20);
+      await cloneFactory.clone();
+      const newCloneAddress: Address = await cloneFactory.clones(1); //at 0 it was the address created by the fixture, so we need to take the second
+      const newClone: BetCollector = await ethers.getContractAt("BetCollector", newCloneAddress);
+      expect(await newClone.commission()).to.be.equal(20);
     });
   });
 

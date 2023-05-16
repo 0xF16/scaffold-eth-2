@@ -16,6 +16,7 @@ async function deployTestClone() {
   const betCollectorCloneFactory = await ethers.getContractFactory("BetCollectorFactory");
   const cloner: BetCollectorFactory = (await betCollectorCloneFactory.deploy(
     betCollector.address,
+    10,
   )) as BetCollectorFactory;
   await cloner.deployed();
 
@@ -35,5 +36,14 @@ describe("BetCollectorFactory", async () => {
   it("Clone is being pushed to the array", async () => {
     const { cloneFactory } = await loadFixture(deployTestClone);
     expect(await cloneFactory.getClonesLength()).to.be.equal(1);
+  });
+  it("Set commission at constructor", async () => {
+    const { cloneFactory } = await loadFixture(deployTestClone);
+    expect(await cloneFactory.commissionForNew()).to.be.equal(10);
+  });
+  it("Set new commission", async () => {
+    const { cloneFactory } = await loadFixture(deployTestClone);
+    await cloneFactory.setNewCommission(20);
+    expect(await cloneFactory.commissionForNew()).to.be.equal(20);
   });
 });

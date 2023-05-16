@@ -60,7 +60,10 @@ contract BetCollector {
     priceThreshold = _priceThreshold;
     initialized = true;
     priceFeed = AggregatorV3Interface(_oracleFeed);
-    commission = 10; //percent
+  }
+
+  function setCommission(uint256 _commission) public {
+    commission = _commission; //percent eg. 10
   }
 
   function createBet(bool _greaterOrEqual) public payable {
