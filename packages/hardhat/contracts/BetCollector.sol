@@ -2,7 +2,6 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
-import "hardhat/console.sol";
 
 contract BetCollector {
   AggregatorV3Interface internal priceFeed;
@@ -17,10 +16,11 @@ contract BetCollector {
   error ErrorWithPayment();
   error AddressAlreadyPlacedBet();
 
+  error OracleRoundNotFinished();
+
   uint256 timeFinishAcceptingBets;
   uint256 timePriceUnveil;
-  uint256 public priceThreshold;
-  // address oracleFeed;
+  int256 public priceThreshold;
   uint256 public commission;
   bool initialized;
 
@@ -55,10 +55,11 @@ contract BetCollector {
   // oracleFeed = _oracleFeed;
   // }
 
-  function initialize(uint256 _priceThreshold) public {
+  function initialize(int256 _priceThreshold, address _oracleFeed) public {
     if (initialized) revert AlreadyInitialized();
     priceThreshold = _priceThreshold;
     initialized = true;
+    priceFeed = AggregatorV3Interface(_oracleFeed);
     commission = 10; //percent
   }
 
@@ -73,9 +74,11 @@ contract BetCollector {
   }
 
   //TODO: constrain so it could be called after specific time
-  function findWinner(uint256 currentPrice) public {
+  function findWinner() public {
     if (winnerKnown == true) revert WinnerAlreadyKnown();
-    if (currentPrice >= priceThreshold) {
+    (uint80 roundID, int price, uint startedAt, uint timeStamp, uint80 answeredInRound) = priceFeed.latestRoundData();
+    if (timeStamp == 0) revert OracleRoundNotFinished();
+    if (price >= priceThreshold) {
       winnerUpperBound = true;
     }
     winnerKnown = true;

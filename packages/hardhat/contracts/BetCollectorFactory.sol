@@ -6,8 +6,8 @@ import "./BetCollector.sol";
 
 contract BetCollectorFactory {
   event NewClone(address cloneAddress);
-  address betCollector;
 
+  address betCollector;
   address[] public clones;
 
   constructor(address _addr) {

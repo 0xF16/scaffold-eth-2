@@ -1,12 +1,16 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { BetCollector, BetCollectorFactory } from "../typechain-types";
+import { BetCollector, BetCollectorFactory, MockupOracle } from "../typechain-types";
 import { parseEther } from "ethers/lib/utils";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
 import { Address } from "hardhat-deploy/types";
 
 describe("BetCollector", async function () {
   async function deployTestClone() {
+    const oracleFactory = await ethers.getContractFactory("MockupOracle");
+    const oracle: MockupOracle = (await oracleFactory.deploy()) as MockupOracle;
+    await oracle.deployed();
+
     const betCollectorFactory = await ethers.getContractFactory("BetCollector");
     const betCollector: BetCollector = (await betCollectorFactory.deploy()) as BetCollector;
     await betCollector.deployed();
@@ -21,9 +25,9 @@ describe("BetCollector", async function () {
 
     const cloneAddress: Address = await cloner.clones(0);
     const cloneInstance: BetCollector = await ethers.getContractAt("BetCollector", cloneAddress);
-    await cloneInstance.initialize(2000);
+    await cloneInstance.initialize(2000 * 1e9, oracle.address);
 
-    return { cloneAddress, cloneInstance, cloneFactory: cloner };
+    return { cloneAddress, cloneInstance, cloneFactory: cloner, oracle };
   }
 
   describe("Fundamental functions", function () {
@@ -47,28 +51,36 @@ describe("BetCollector", async function () {
     });
 
     it("Pick a winner", async function () {
-      const { cloneInstance } = await loadFixture(deployTestClone);
+      const { cloneInstance, oracle } = await loadFixture(deployTestClone);
       const [, participant1, participant2] = await ethers.getSigners();
       await cloneInstance.connect(participant1).createBet(true, { value: parseEther("1") });
       await cloneInstance.connect(participant2).createBet(false, { value: parseEther("2") });
 
-      await cloneInstance.findWinner(2200);
+      await oracle.setPrice(2200 * 1e9);
+
+      await cloneInstance.findWinner();
       expect(await cloneInstance.winnerUpperBound()).to.equal(true);
     });
 
     it("Calculate payout", async function () {
-      const { cloneInstance } = await loadFixture(deployTestClone);
+      const { cloneInstance, oracle } = await loadFixture(deployTestClone);
       const [, participant1, participant2] = await ethers.getSigners();
       await await cloneInstance.connect(participant1).createBet(true, { value: parseEther("1") });
       await cloneInstance.connect(participant2).createBet(false, { value: parseEther("2") });
 
-      await cloneInstance.findWinner(2200);
+      await oracle.setPrice(2200 * 1e9);
+
+      await cloneInstance.findWinner();
       expect(await cloneInstance.calculatePayout(participant1.address)).to.equal(parseEther("2.7"));
     });
   });
 
   describe("Prize calculations and send prizes", async () => {
     async function deployTestClone() {
+      const oracleFactory = await ethers.getContractFactory("MockupOracle");
+      const oracle: MockupOracle = (await oracleFactory.deploy()) as MockupOracle;
+      await oracle.deployed();
+
       const betCollectorFactory = await ethers.getContractFactory("BetCollector");
       const betCollector: BetCollector = (await betCollectorFactory.deploy()) as BetCollector;
       await betCollector.deployed();
@@ -84,7 +96,7 @@ describe("BetCollector", async function () {
       const cloneAddress: Address = await cloner.clones(0);
       const cloneInstance: BetCollector = await ethers.getContractAt("BetCollector", cloneAddress);
 
-      await cloneInstance.initialize(2000);
+      await cloneInstance.initialize(2000 * 1e9, oracle.address);
 
       const [, participant1, participant2, participant3, participant4] = await ethers.getSigners();
       await cloneInstance.connect(participant1).createBet(false, { value: parseEther("7") });
@@ -92,28 +104,34 @@ describe("BetCollector", async function () {
       await cloneInstance.connect(participant3).createBet(true, { value: parseEther("6") });
       await cloneInstance.connect(participant4).createBet(true, { value: parseEther("4") });
 
-      return { cloneAddress, cloneInstance, cloneFactory: cloner };
+      return { cloneAddress, cloneInstance, cloneFactory: cloner, oracle };
     }
 
     it("Upper bound wins", async () => {
-      const { cloneInstance } = await loadFixture(deployTestClone);
+      const { cloneInstance, oracle } = await loadFixture(deployTestClone);
       const [, , , participant3] = await ethers.getSigners();
 
-      await cloneInstance.findWinner(2200);
+      await oracle.setPrice(2200 * 1e9);
+
+      await cloneInstance.findWinner();
       expect(await cloneInstance.calculatePayout(participant3.address)).to.equal(parseEther("10.8"));
     });
     it("Lower bound wins", async () => {
-      const { cloneInstance } = await loadFixture(deployTestClone);
+      const { cloneInstance, oracle } = await loadFixture(deployTestClone);
       const [, , participant2] = await ethers.getSigners();
 
-      await cloneInstance.findWinner(1800);
+      await oracle.setPrice(2200 * 1e9);
+
+      await cloneInstance.findWinner();
       expect(await cloneInstance.calculatePayout(participant2.address)).to.equal(parseEther("5.4"));
     });
     it("All winners claim reward", async () => {
-      const { cloneInstance } = await loadFixture(deployTestClone);
+      const { cloneInstance, oracle } = await loadFixture(deployTestClone);
       const [, , , participant3, participant4] = await ethers.getSigners();
 
-      await cloneInstance.findWinner(2200);
+      await oracle.setPrice(2200 * 1e9);
+
+      await cloneInstance.findWinner();
       await cloneInstance.connect(participant3).withdrawPrize();
       expect(await cloneInstance.connect(participant4).withdrawPrize()).to.not.be.reverted;
     });
