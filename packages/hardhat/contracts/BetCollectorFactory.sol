@@ -14,6 +14,10 @@ contract BetCollectorFactory {
     betCollector = _addr;
   }
 
+  function getClonesLength() public view returns (uint256) {
+    return clones.length;
+  }
+
   function clone() public {
     address newClone = Clones.clone(betCollector);
     clones.push(newClone);

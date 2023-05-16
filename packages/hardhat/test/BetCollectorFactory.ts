@@ -2,7 +2,6 @@ import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BetCollector, BetCollectorFactory } from "../typechain-types";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { ContractReceipt, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 
 describe("BetCollectorFactory", async () => {
@@ -17,19 +16,10 @@ describe("BetCollectorFactory", async () => {
     )) as BetCollectorFactory;
     await cloner.deployed();
 
-    const clone: ContractTransaction = await cloner.clone();
-    const recipt: ContractReceipt = await clone.wait();
+    await cloner.clone();
 
-    let cloneAddress: Address;
-    let cloneInstance: BetCollector;
-
-    if (recipt.events != null) {
-      const newClone = recipt.events.find(v => v.event == "NewClone");
-      if (newClone && newClone.args) {
-        cloneAddress = newClone.args.cloneAddress;
-        cloneInstance = await ethers.getContractAt("BetCollector", cloneAddress);
-      }
-    }
+    const cloneAddress: Address = await cloner.clones(0);
+    const cloneInstance: BetCollector = await ethers.getContractAt("BetCollector", cloneAddress);
 
     return { cloneAddress, cloneInstance, cloneFactory: cloner };
   }
@@ -37,5 +27,9 @@ describe("BetCollectorFactory", async () => {
   it("Clone", async () => {
     const { cloneInstance } = await loadFixture(deployTestClone);
     expect(await cloneInstance.initialize(2000)).to.not.be.reverted;
+  });
+  it("Clone is being pushed to the array", async () => {
+    const { cloneFactory } = await loadFixture(deployTestClone);
+    expect(await cloneFactory.getClonesLength()).to.be.equal(1);
   });
 });

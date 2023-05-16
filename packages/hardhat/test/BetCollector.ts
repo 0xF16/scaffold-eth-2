@@ -3,7 +3,6 @@ import { ethers } from "hardhat";
 import { BetCollector, BetCollectorFactory } from "../typechain-types";
 import { parseEther } from "ethers/lib/utils";
 import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
-import { ContractReceipt, ContractTransaction } from "ethers";
 import { Address } from "hardhat-deploy/types";
 
 describe("BetCollector", async function () {
@@ -18,20 +17,11 @@ describe("BetCollector", async function () {
     )) as BetCollectorFactory;
     await cloner.deployed();
 
-    const clone: ContractTransaction = await cloner.clone();
-    const recipt: ContractReceipt = await clone.wait();
+    await cloner.clone();
 
-    let cloneAddress: Address = ethers.constants.AddressZero;
-    let cloneInstance: BetCollector;
-
-    if (recipt.events != null) {
-      const newClone = recipt.events.find(v => v.event == "NewClone");
-      if (newClone && newClone.args) {
-        cloneAddress = newClone.args.cloneAddress;
-        cloneInstance = await ethers.getContractAt("BetCollector", cloneAddress);
-        await cloneInstance.initialize(2000);
-      }
-    }
+    const cloneAddress: Address = await cloner.clones(0);
+    const cloneInstance: BetCollector = await ethers.getContractAt("BetCollector", cloneAddress);
+    await cloneInstance.initialize(2000);
 
     return { cloneAddress, cloneInstance, cloneFactory: cloner };
   }
@@ -89,26 +79,18 @@ describe("BetCollector", async function () {
       )) as BetCollectorFactory;
       await cloner.deployed();
 
-      const clone: ContractTransaction = await cloner.clone();
-      const recipt: ContractReceipt = await clone.wait();
+      await cloner.clone();
 
-      let cloneAddress: Address = ethers.constants.AddressZero;
-      let cloneInstance: BetCollector;
+      const cloneAddress: Address = await cloner.clones(0);
+      const cloneInstance: BetCollector = await ethers.getContractAt("BetCollector", cloneAddress);
 
-      if (recipt.events != null) {
-        const newClone = recipt.events.find(v => v.event == "NewClone");
-        if (newClone && newClone.args) {
-          cloneAddress = newClone.args.cloneAddress;
-          cloneInstance = await ethers.getContractAt("BetCollector", cloneAddress);
-          await cloneInstance.initialize(2000);
+      await cloneInstance.initialize(2000);
 
-          const [, participant1, participant2, participant3, participant4] = await ethers.getSigners();
-          await cloneInstance.connect(participant1).createBet(false, { value: parseEther("7") });
-          await cloneInstance.connect(participant2).createBet(false, { value: parseEther("3") });
-          await cloneInstance.connect(participant3).createBet(true, { value: parseEther("6") });
-          await cloneInstance.connect(participant4).createBet(true, { value: parseEther("4") });
-        }
-      }
+      const [, participant1, participant2, participant3, participant4] = await ethers.getSigners();
+      await cloneInstance.connect(participant1).createBet(false, { value: parseEther("7") });
+      await cloneInstance.connect(participant2).createBet(false, { value: parseEther("3") });
+      await cloneInstance.connect(participant3).createBet(true, { value: parseEther("6") });
+      await cloneInstance.connect(participant4).createBet(true, { value: parseEther("4") });
 
       return { cloneAddress, cloneInstance, cloneFactory: cloner };
     }
