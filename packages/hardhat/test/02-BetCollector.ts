@@ -71,20 +71,18 @@ describe("BetCollector", async function () {
       await cloneInstance.connect(participant2).createBet(false, { value: parseEther("2") });
 
       await oracle.setPrice(2200 * 1e9);
+      await time.increaseTo(timePriceUnveil);
 
       await cloneInstance.findWinner();
       expect(await cloneInstance.winnerUpperBound()).to.equal(true);
     });
 
     it("Calculate payout", async function () {
-      const { cloneInstance, oracle } = await loadFixture(deployTestClone);
+      const { cloneInstance } = await loadFixture(deployTestClone);
       const [, participant1, participant2] = await ethers.getSigners();
       await await cloneInstance.connect(participant1).createBet(true, { value: parseEther("1") });
       await cloneInstance.connect(participant2).createBet(false, { value: parseEther("2") });
 
-      await oracle.setPrice(2200 * 1e9);
-
-      await cloneInstance.findWinner();
       expect(await cloneInstance.calculatePayout(participant1.address)).to.equal(parseEther("2.7"));
     });
     it("Old commission values for contract before new setNewCommission is executed", async () => {
@@ -111,6 +109,31 @@ describe("BetCollector", async function () {
         cloneInstance.connect(participant1).createBet(true, { value: parseEther("1") }),
       ).to.revertedWithCustomError(cloneInstance, "BetsImmutable");
     });
+    it("Throw error when a winnning side is chosen to early", async () => {
+      const { cloneInstance } = await loadFixture(deployTestClone);
+      const [, participant1, participant2] = await ethers.getSigners();
+
+      await cloneInstance.connect(participant1).createBet(true, { value: parseEther("1") });
+      await cloneInstance.connect(participant2).createBet(false, { value: parseEther("2") });
+
+      await time.increaseTo(timePriceUnveil - 60);
+
+      await expect(cloneInstance.findWinner()).to.revertedWithCustomError(
+        cloneInstance,
+        "WinnerTimeThresholdNotReached",
+      );
+    });
+    it("Winnning side is chosen after threshold reached", async () => {
+      const { cloneInstance } = await loadFixture(deployTestClone);
+      const [, participant1, participant2] = await ethers.getSigners();
+
+      await cloneInstance.connect(participant1).createBet(true, { value: parseEther("1") });
+      await cloneInstance.connect(participant2).createBet(false, { value: parseEther("2") });
+
+      await time.increaseTo(timePriceUnveil);
+
+      expect(await cloneInstance.findWinner()).to.be.ok;
+    });
   });
 
   describe("Prize calculations and send prizes", async () => {
@@ -121,6 +144,7 @@ describe("BetCollector", async function () {
       await createBets(cloneInstance);
 
       await oracle.setPrice(2200 * 1e9);
+      await time.increaseTo(timePriceUnveil);
 
       await cloneInstance.findWinner();
       expect(await cloneInstance.calculatePayout(participant3.address)).to.equal(parseEther("10.8"));
@@ -132,6 +156,7 @@ describe("BetCollector", async function () {
       await createBets(cloneInstance);
 
       await oracle.setPrice(2200 * 1e9);
+      await time.increaseTo(timePriceUnveil);
 
       await cloneInstance.findWinner();
       expect(await cloneInstance.calculatePayout(participant2.address)).to.equal(parseEther("5.4"));
@@ -143,6 +168,7 @@ describe("BetCollector", async function () {
       await createBets(cloneInstance);
 
       await oracle.setPrice(2200 * 1e9);
+      await time.increaseTo(timePriceUnveil);
 
       await cloneInstance.findWinner();
       await cloneInstance.connect(participant3).withdrawPrize();

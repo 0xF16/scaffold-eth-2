@@ -15,6 +15,7 @@ contract BetCollector {
   error AddressAlreadyClaimed();
   error ErrorWithPayment();
   error AddressAlreadyPlacedBet();
+  error WinnerTimeThresholdNotReached();
 
   error OracleRoundNotFinished();
 
@@ -74,8 +75,8 @@ contract BetCollector {
     bets[msg.sender] = Bet(msg.value, _greaterOrEqual, true, false);
   }
 
-  //TODO: constrain so it could be called after specific time
   function findWinner() public {
+    if (block.timestamp < timePriceUnveil) revert WinnerTimeThresholdNotReached();
     if (winnerKnown == true) revert WinnerAlreadyKnown();
     (, int price, , uint timeStamp, ) = priceFeed.latestRoundData(); //uint80 roundID, int price, uint startedAt, uint timeStamp, uint80 answeredInRound
     if (timeStamp == 0) revert OracleRoundNotFinished();
@@ -109,4 +110,6 @@ contract BetCollector {
     }
     revert AddressNotPlaying();
   }
+
+  //TODO: add a function for the owner of the project to withdraw fees
 }
