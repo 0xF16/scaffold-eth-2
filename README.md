@@ -3,6 +3,8 @@
 ## Things learned
 
 - [x] how to write tests
+- [x] test things quicker with hardhat tests as I do not have to wait for real time to pass
+- [x] when reverting you got to expect things in testing in a different way
 - [x] order of operations matter for precision
 
 ## Plans to move forward

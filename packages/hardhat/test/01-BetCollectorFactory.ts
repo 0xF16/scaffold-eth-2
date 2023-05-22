@@ -1,10 +1,15 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { BetCollector, BetCollectorFactory, MockupOracle } from "../typechain-types";
-import { loadFixture } from "@nomicfoundation/hardhat-network-helpers";
+import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import { Address } from "hardhat-deploy/types";
 
+let timeFinishAcceptingBets: number;
+let timePriceUnveil: number;
+
 async function deployTestClone() {
+  timeFinishAcceptingBets = (await time.latest()) + 24 * 60 * 60; //24h after mined block
+  timePriceUnveil = timeFinishAcceptingBets + 24 * 60 * 60; //next 24h after previous time
   const oracleFactory = await ethers.getContractFactory("MockupOracle");
   const oracle: MockupOracle = (await oracleFactory.deploy()) as MockupOracle;
   await oracle.deployed();
@@ -31,7 +36,8 @@ async function deployTestClone() {
 describe("BetCollectorFactory", async () => {
   it("Clone", async () => {
     const { cloneInstance, oracle } = await loadFixture(deployTestClone);
-    expect(await cloneInstance.initialize(2000 * 1e9, oracle.address)).to.not.be.reverted;
+    expect(await cloneInstance.initialize(2000 * 1e9, oracle.address, timeFinishAcceptingBets, timePriceUnveil)).to.not
+      .be.reverted;
   });
   it("Clone is being pushed to the array", async () => {
     const { cloneFactory } = await loadFixture(deployTestClone);

@@ -40,33 +40,31 @@ contract BetCollector {
 
   mapping(address => Bet) public bets;
 
-  modifier beforBettingDeadline() {
+  modifier beforeBettingDeadline() {
     if (block.timestamp > timeFinishAcceptingBets) revert BetsImmutable();
     _;
   }
 
-  // constructor() // uint256 _timeFinishAcceptingBets,
-  // // uint256 _timePriceUnveil,
-  // // uint256 _priceThreshold /*, address _oracleFeed*/
-  // {
-  // timeFinishAcceptingBets = _timeFinishAcceptingBets;
-  // timePriceUnveil = _timePriceUnveil;
-  // priceThreshold = _priceThreshold;
-  // oracleFeed = _oracleFeed;
-  // }
-
-  function initialize(int256 _priceThreshold, address _oracleFeed) public {
+  function initialize(
+    int256 _priceThreshold,
+    address _oracleFeed,
+    uint256 _timeFinishAcceptingBets,
+    uint256 _timePriceUnveil
+  ) public {
     if (initialized) revert AlreadyInitialized();
     priceThreshold = _priceThreshold;
     initialized = true;
     priceFeed = AggregatorV3Interface(_oracleFeed);
+    timeFinishAcceptingBets = _timeFinishAcceptingBets;
+    timePriceUnveil = _timePriceUnveil;
   }
 
+  //prevent to set the commission by any user
   function setCommission(uint256 _commission) public {
     commission = _commission; //percent eg. 10
   }
 
-  function createBet(bool _greaterOrEqual) public payable {
+  function createBet(bool _greaterOrEqual) public payable beforeBettingDeadline {
     if (bets[msg.sender].active == true) revert AddressAlreadyPlacedBet();
     if (_greaterOrEqual) {
       poolUpper += msg.value;

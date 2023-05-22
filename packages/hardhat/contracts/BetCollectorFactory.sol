@@ -2,9 +2,10 @@
 pragma solidity >=0.8.0 <0.9.0;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
 import "./BetCollector.sol";
 
-contract BetCollectorFactory {
+contract BetCollectorFactory is Ownable {
   event NewClone(address cloneAddress);
 
   address betCollectorAddress;
@@ -28,7 +29,7 @@ contract BetCollectorFactory {
     emit NewClone(newClone);
   }
 
-  function setNewCommission(uint256 _commissionForNew) public {
+  function setNewCommission(uint256 _commissionForNew) public onlyOwner {
     commissionForNew = _commissionForNew;
   }
 }
