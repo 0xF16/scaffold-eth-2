@@ -50,7 +50,8 @@ contract BetCollector {
     int256 _priceThreshold,
     address _oracleFeed,
     uint256 _timeFinishAcceptingBets,
-    uint256 _timePriceUnveil
+    uint256 _timePriceUnveil,
+    uint256 _commission
   ) public {
     if (initialized) revert AlreadyInitialized();
     priceThreshold = _priceThreshold;
@@ -58,11 +59,7 @@ contract BetCollector {
     priceFeed = AggregatorV3Interface(_oracleFeed);
     timeFinishAcceptingBets = _timeFinishAcceptingBets;
     timePriceUnveil = _timePriceUnveil;
-  }
-
-  //prevent to set the commission by any user
-  function setCommission(uint256 _commission) public {
-    commission = _commission; //percent eg. 10
+    commission = _commission;
   }
 
   function createBet(bool _greaterOrEqual) public payable beforeBettingDeadline {

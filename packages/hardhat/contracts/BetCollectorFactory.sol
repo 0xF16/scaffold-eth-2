@@ -12,19 +12,22 @@ contract BetCollectorFactory is Ownable {
   address[] public clones;
   uint256 public commissionForNew;
 
-  constructor(address _addr, uint256 _commissionForNew) {
+  address internal oracleFeed;
+
+  constructor(address _addr, uint256 _commissionForNew, address _oracleFeed) {
     betCollectorAddress = _addr;
     commissionForNew = _commissionForNew;
+    oracleFeed = _oracleFeed;
   }
 
   function getClonesLength() public view returns (uint256) {
     return clones.length;
   }
 
-  function clone() public {
+  function clone(int256 _priceThreshold, uint256 _timeFinishAcceptingBets, uint256 _timePriceUnveil) public {
     address newClone = Clones.clone(betCollectorAddress);
     BetCollector betCollector = BetCollector(newClone);
-    betCollector.setCommission(commissionForNew);
+    betCollector.initialize(_priceThreshold, oracleFeed, _timeFinishAcceptingBets, _timePriceUnveil, commissionForNew);
     clones.push(newClone);
     emit NewClone(newClone);
   }

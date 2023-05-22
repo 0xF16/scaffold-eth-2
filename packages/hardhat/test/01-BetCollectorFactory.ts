@@ -22,10 +22,11 @@ async function deployTestClone() {
   const cloner: BetCollectorFactory = (await betCollectorCloneFactory.deploy(
     betCollector.address,
     10,
+    oracle.address,
   )) as BetCollectorFactory;
   await cloner.deployed();
 
-  await cloner.clone();
+  await cloner.clone(2000 * 1e9, timeFinishAcceptingBets, timePriceUnveil);
 
   const cloneAddress: Address = await cloner.clones(0);
   const cloneInstance: BetCollector = await ethers.getContractAt("BetCollector", cloneAddress);
@@ -34,11 +35,6 @@ async function deployTestClone() {
 }
 
 describe("BetCollectorFactory", async () => {
-  it("Clone", async () => {
-    const { cloneInstance, oracle } = await loadFixture(deployTestClone);
-    expect(await cloneInstance.initialize(2000 * 1e9, oracle.address, timeFinishAcceptingBets, timePriceUnveil)).to.not
-      .be.reverted;
-  });
   it("Clone is being pushed to the array", async () => {
     const { cloneFactory } = await loadFixture(deployTestClone);
     expect(await cloneFactory.getClonesLength()).to.be.equal(1);
