@@ -1,5 +1,5 @@
 import { ContractAbi, ContractName } from "~~/utils/scaffold-eth/contract";
-import { ExtractAbiEventNames } from "abitype";
+import { Abi,ExtractAbiEventNames } from "abitype";
 import { useProvider, useContract } from "wagmi";
 import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
 import { ethers } from "ethers";
@@ -44,7 +44,7 @@ export const useScaffoldEventHistory = <
 
   const contract = useContract({
     address: deployedContractData?.address,
-    abi: deployedContractData?.abi,
+    abi: deployedContractData?.abi as Abi,
     signerOrProvider: provider,
   });
 
