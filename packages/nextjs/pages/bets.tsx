@@ -1,8 +1,8 @@
 import Head from "next/head";
 import type { NextPage } from "next";
-import { BetItem } from "~~/components/example-ui/BetItem";
+import { BetCollection } from "~~/components/example-ui/BetCollection";
 
-const ExampleUI: NextPage = () => {
+const Bets: NextPage = () => {
   return (
     <>
       <Head>
@@ -12,11 +12,11 @@ const ExampleUI: NextPage = () => {
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree&display=swap" rel="stylesheet" />
       </Head>
-      <div className="grid lg:grid-cols-2 flex-grow">
-        <BetItem />
+      <div>
+        <BetCollection />
       </div>
     </>
   );
 };
 
-export default ExampleUI;
+export default Bets;

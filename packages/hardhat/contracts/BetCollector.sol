@@ -19,8 +19,9 @@ contract BetCollector {
 
   error OracleRoundNotFinished();
 
-  uint256 timeFinishAcceptingBets;
-  uint256 timePriceUnveil;
+  uint256 public timeBetCollectrorCreated;
+  uint256 public timeFinishAcceptingBets;
+  uint256 public timePriceUnveil;
   int256 public priceThreshold;
   uint256 public commission;
   bool initialized;
@@ -57,6 +58,7 @@ contract BetCollector {
     priceThreshold = _priceThreshold;
     initialized = true;
     priceFeed = AggregatorV3Interface(_oracleFeed);
+    timeBetCollectrorCreated = block.timestamp;
     timeFinishAcceptingBets = _timeFinishAcceptingBets;
     timePriceUnveil = _timePriceUnveil;
     commission = _commission;
