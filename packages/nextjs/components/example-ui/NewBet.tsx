@@ -30,12 +30,13 @@ export const NewBet = () => {
       <DiamondIcon className="absolute top-24" />
       <CopyIcon className="absolute bottom-0 left-36" />
       <HareIcon className="absolute right-0 bottom-24" />
-      <div className="flex flex-col w-full mx-5 sm:mx-8 2xl:mx-20">
-        <div className="flex flex-col mt-6 px-7 py-8 bg-base-200 opacity-80 rounded-2xl shadow-lg border-2 border-primary">
-          <span className="text-4xl sm:text-6xl text-black">New bet on ETH price</span>
+      <div className="flex flex-col w-full mx-5 sm:mx-8 2xl:mx-20 py-auto">
+        <div className="flex flex-col mt-6 px-7 py-8 bg-base-200 opacity-95 rounded-2xl shadow-lg border-2 border-primary">
+          <h1 className="text-4xl sm:text-6xl">New bet on ETH price</h1>
 
+          {/* TODO: Use input groups as per https://daisyui.com/components/input-group/*/}
           <div className="mt-8 flex flex-row sm:flex-row items-start sm:items-center gap-2 sm:gap-5">
-            <label className="uppercase text-lg">Ethereum price</label>
+            <label className="uppercase text-lg w-1/3">Ethereum price</label>
             <input
               type="number"
               placeholder="price of ETH in USD"
@@ -45,7 +46,7 @@ export const NewBet = () => {
           </div>
 
           <div className="mt-8 flex flex-row sm:flex-row items-start sm:items-center gap-2 sm:gap-5">
-            <label className="uppercase text-lg">Stop collecting bets</label>
+            <label className="uppercase text-lg w-1/3">Stop collecting bets</label>
             <DateTimePicker
               format="yyyy-MM-dd HH:mm:ss"
               value={timeStop}
@@ -56,7 +57,7 @@ export const NewBet = () => {
           </div>
 
           <div className="mt-8 flex flex-row sm:flex-row items-start sm:items-center gap-2 sm:gap-5">
-            <label className="uppercase text-lg">Evaluate winners at</label>
+            <label className="uppercase text-lg w-1/3">Evaluate winners at</label>
             <DateTimePicker
               format="yyyy-MM-dd HH:mm:ss"
               value={timeEval}

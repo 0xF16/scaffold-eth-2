@@ -1,11 +1,24 @@
 import { useEffect, useState } from "react";
 import betCollector from "../../../hardhat/artifacts/contracts/BetCollector.sol/BetCollector.json";
+import { DynamicProgressBar } from "./DynamicProgressBar";
 import { BigNumber } from "ethers";
 import moment from "moment";
-import { useContractRead } from "wagmi";
+import { useContractRead, useContractWrite, usePrepareContractWrite } from "wagmi";
 import { useScaffoldContractRead } from "~~/hooks/scaffold-eth";
 
+//TODO: add a placeholder while loading data in each item
+
 export const BetItem = (props: { index: number | undefined }) => {
+  const [timeBetCreated, setTimeBetCreated] = useState(moment());
+  const [timeToFinishBetting, setTimeToFinishBetting] = useState(moment());
+  const [timeToChooseWiners, setTimeToChooseWiners] = useState(moment());
+
+  const [timeLeftToFinishBetting, setTimeLeftToFinishBetting] = useState(0);
+  const [timePassedSinceCreation, setTimePassedSinceCreation] = useState(0);
+
+  const [winnerKnownState, setWinnerKnownState] = useState(false);
+  const [winnerKnownIsLoading, setWinnerKnownIsLoading] = useState(false);
+
   const { data: address } = useScaffoldContractRead({
     contractName: "BetCollectorFactory",
     functionName: "clones",
@@ -41,44 +54,57 @@ export const BetItem = (props: { index: number | undefined }) => {
   }
 
   //read timePriceUnveil from contract
-  // const { data: timePriceUnveil } = useContractRead({
-  //   abi: betCollector.abi,
-  //   address: address?.toString(),
-  //   functionName: "timePriceUnveil",
-  // });
+  const { data: timePriceUnveil } = useContractRead({
+    abi: betCollector.abi,
+    address: address?.toString(),
+    functionName: "timePriceUnveil",
+  });
+  let timePriceUnveilRefined: BigNumber = BigNumber.from(0);
+  if (timePriceUnveil !== undefined) {
+    timePriceUnveilRefined = BigNumber.from(timePriceUnveil);
+  }
 
-  const [timeBetCreated, setTimeBetCreated] = useState(moment());
-  const [timeToFinishBetting, setTimeToFinishBetting] = useState(moment());
-
-  const [timeLeftToFinishBetting, setTimeLeftToFinishBetting] = useState(0);
-  const [timePassedSinceCreation, setTimePassedSinceCreation] = useState(0);
+  const { data: winnerKnown } = useContractRead({
+    abi: betCollector.abi,
+    address: address?.toString(),
+    functionName: "winnerKnown",
+  });
+  let winnerKnownRefined = false;
+  if (winnerKnown !== undefined) {
+    winnerKnownRefined = winnerKnown as boolean;
+  }
 
   useEffect(() => {
     setTimeBetCreated(moment(parseInt(timeBetCollectrorCreatedRefined.toString()) * 1000, "x"));
     setTimeToFinishBetting(moment(parseInt(timeStopRefined.toString()) * 1000, "x"));
-  }, [timeBetCollectrorCreatedRefined, timeStopRefined]);
+    setTimeToChooseWiners(moment(parseInt(timePriceUnveilRefined.toString()) * 1000, "x"));
+  }, [timeBetCollectrorCreatedRefined, timePriceUnveilRefined, timeStopRefined]);
 
   useEffect(() => {
     const interval = setInterval(() => {
       setTimePassedSinceCreation(moment().unix() - timeBetCreated.unix());
       setTimeLeftToFinishBetting(timeToFinishBetting.unix() - moment().unix());
-      if (timeToFinishBetting.unix() - moment().unix() <= 0) {
+      setWinnerKnownState(winnerKnownRefined);
+      if (winnerKnownRefined == true) {
         clearInterval(interval);
       }
     }, 1000);
     return () => clearInterval(interval);
-  }, [timeBetCreated, timeToFinishBetting]);
+  }, [timeBetCreated, timeToFinishBetting, winnerKnownRefined]);
 
-  function temperatureClassname(value: number, max: number) {
-    const prefix = "progress-";
+  const findWinnerWrite = usePrepareContractWrite({
+    abi: betCollector.abi,
+    address: address?.toString(),
+    functionName: "findWinner",
+  });
+  const { isLoading, write } = useContractWrite(findWinnerWrite.config);
 
-    if (value / max < 0.5) {
-      return prefix + "primary";
-    } else if (value / max < 0.75) {
-      return prefix + "warning";
-    } else {
-      return prefix + "error";
-    }
+  useEffect(() => {
+    setWinnerKnownIsLoading(isLoading);
+  }, [isLoading]);
+
+  function findWinnerHandler() {
+    if (write !== undefined) write();
   }
 
   return (
@@ -86,10 +112,14 @@ export const BetItem = (props: { index: number | undefined }) => {
       <div className="card-body">
         <div className="flex flex-col">
           <ul className="steps">
-            <li className="step step-primary">Accepting bets</li>
-            <li className="step step-primary">Bets collected</li>
-            <li className="step">Winner known</li>
-            <li className="step">Rewards paid out</li>
+            <li className={`step ${moment().unix() > timeBetCreated.unix() ? "step-primary" : " "}`}>Bets open</li>
+            <li className={`step ${moment().unix() > timeToFinishBetting.unix() ? "step-primary" : " "}`}>
+              Bets closed
+            </li>
+            <li className={`step ${moment().unix() > timeToChooseWiners.unix() ? "step-primary" : " "}`}>
+              Judge results
+            </li>
+            <li className={`step ${winnerKnown ? "step-primary" : " "}`}>Rewards to claim</li>
           </ul>
           {/* <p>Address: {address}</p> */}
           <p>Price: {price?.toString()}</p>
@@ -99,18 +129,29 @@ export const BetItem = (props: { index: number | undefined }) => {
           <p>Time left to bet: {timeLeftToFinishBetting}</p>
           {/* <p>Exact time left to choose winers: {timePriceUnveil?.toString()}</p> */}
           {/* <p>Time left to choose winers: {timeToChooseWiners?.toString()}</p> */}
-          <progress
-            className={`progress ${temperatureClassname(
-              timePassedSinceCreation,
-              timeToFinishBetting.unix() - timeBetCreated.unix(),
-            )} w-full`}
+          {/*TODO: use countdown to display time left*/}
+          {/* <Countdown timeFrom={moment()} milestoneTime={timeToFinishBetting} /> */}
+          <DynamicProgressBar
             value={timePassedSinceCreation}
             max={timeToFinishBetting.unix() - timeBetCreated.unix()}
-          ></progress>
+          />
         </div>
 
         <div className="card-actions justify-end">
-          <button className="btn btn-primary">Buy Now</button>
+          <button className={`btn btn-primary ${moment().unix() < timeToFinishBetting.unix() ? "" : "hidden"}`}>
+            Place bet
+          </button>
+          <button
+            className={`btn btn-primary ${moment().unix() >= timeToChooseWiners.unix() ? "" : "hidden"} ${
+              winnerKnownIsLoading || !write ? "btn-disabled" : ""
+            }`}
+            onClick={findWinnerHandler}
+          >
+            Choose winners
+          </button>
+          {/* {findWinnerWrite.isError && findWinnerWrite.error ? <div>Error: {findWinnerWrite.error.message}</div> : ""} */}
+          {/* TODO: add a glow effect */}
+          <button className={`btn btn-primary ${winnerKnownState == true ? "" : "hidden"}`}>Withdraw price</button>
         </div>
       </div>
     </div>

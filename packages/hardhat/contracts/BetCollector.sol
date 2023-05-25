@@ -29,7 +29,7 @@ contract BetCollector {
   bool public winnerUpperBound;
   bool public winnerKnown;
 
-  //wariables used to monitor how much reward pools and how much is left in the pool
+  //variables used to monitor how much reward pools and how much is left in the pool
   uint256 public poolLower;
   uint256 public poolUpper;
 
@@ -111,4 +111,6 @@ contract BetCollector {
   }
 
   //TODO: add a function for the owner of the project to withdraw fees
+  //TODO: variable fee (closer to the end of bet collection the higher the fee)
+  //TODO: send a fee to one address
 }

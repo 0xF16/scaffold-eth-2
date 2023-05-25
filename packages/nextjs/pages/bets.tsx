@@ -13,6 +13,7 @@ const Bets: NextPage = () => {
         <link href="https://fonts.googleapis.com/css2?family=Bai+Jamjuree&display=swap" rel="stylesheet" />
       </Head>
       <div>
+        {/* TODO: add a filter, so we can see our bets */}
         <BetCollection />
       </div>
     </>
