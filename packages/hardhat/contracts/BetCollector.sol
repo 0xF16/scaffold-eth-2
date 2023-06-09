@@ -6,6 +6,8 @@ import "@chainlink/contracts/src/v0.8/interfaces/AggregatorV3Interface.sol";
 contract BetCollector {
   AggregatorV3Interface internal priceFeed;
 
+  event WinnerKnown(bool winnerUpperBound);
+
   error AlreadyInitialized();
   error BetsImmutable();
   error WinnerNotKnown();
@@ -83,6 +85,7 @@ contract BetCollector {
       winnerUpperBound = true;
     }
     winnerKnown = true;
+    emit WinnerKnown(winnerUpperBound);
   }
 
   function withdrawPrize() public {

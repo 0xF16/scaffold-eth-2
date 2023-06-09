@@ -46,6 +46,12 @@ export const Header = () => {
         </NavLink>
       </li>
       <li>
+        <NavLink href="/test-page">
+          <BookOpenIcon className="h-4 w-4" />
+          Test Page
+        </NavLink>
+      </li>
+      <li>
         <NavLink href="/example-ui">
           <SparklesIcon className="h-4 w-4" />
           Create a new bet

@@ -9,9 +9,9 @@ export const DynamicProgressBar = (props: { value: number; max: number }) => {
   }, [props.value, props.max]);
 
   useEffect(() => {
-    if (ratio < 0.5) {
+    if (ratio < 0.75) {
       setLevel("primary");
-    } else if (ratio < 0.75) {
+    } else if (ratio < 0.9) {
       setLevel("warning");
     } else {
       setLevel("error");

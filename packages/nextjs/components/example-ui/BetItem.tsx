@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import betCollector from "../../../hardhat/artifacts/contracts/BetCollector.sol/BetCollector.json";
+import { Countdown } from "./Countdown";
 import { DynamicProgressBar } from "./DynamicProgressBar";
 import { BigNumber } from "ethers";
 import moment from "moment";
@@ -9,11 +10,11 @@ import { useScaffoldContractRead } from "~~/hooks/scaffold-eth";
 //TODO: add a placeholder while loading data in each item
 
 export const BetItem = (props: { index: number | undefined }) => {
-  const [timeBetCreated, setTimeBetCreated] = useState(moment());
-  const [timeToFinishBetting, setTimeToFinishBetting] = useState(moment());
-  const [timeToChooseWiners, setTimeToChooseWiners] = useState(moment());
+  const [timeBetCreated, setTimeBetCreated] = useState(moment()); //when the bet collector contract was created
+  const [timeToFinishBetting, setTimeToFinishBetting] = useState(moment()); //when betting stops
+  const [timeToChooseWiners, setTimeToChooseWiners] = useState(moment()); //when winners are chosen
 
-  const [timeLeftToFinishBetting, setTimeLeftToFinishBetting] = useState(0);
+  const [, setTimeLeftToFinishBetting] = useState(0);
   const [timePassedSinceCreation, setTimePassedSinceCreation] = useState(0);
 
   const [winnerKnownState, setWinnerKnownState] = useState(false);
@@ -25,11 +26,14 @@ export const BetItem = (props: { index: number | undefined }) => {
     args: [BigNumber.from(props.index)],
   });
 
-  const { data: price } = useContractRead({
-    abi: betCollector.abi,
-    address: address?.toString(),
-    functionName: "priceThreshold",
-  });
+  // const price: number = data['price'] || 0; //priceThreshold
+  // console.log("price", JSON.stringify(data.priceThreshold));
+
+  // const { data: price } = useContractRead({
+  //   abi: betCollector.abi,
+  //   address: address?.toString(),
+  //   functionName: "priceThreshold",
+  // });
 
   //read timeBetCollectrorCreated from contract
   const { data: timeBetCollectrorCreated } = useContractRead({
@@ -85,6 +89,21 @@ export const BetItem = (props: { index: number | undefined }) => {
       setTimePassedSinceCreation(moment().unix() - timeBetCreated.unix());
       setTimeLeftToFinishBetting(timeToFinishBetting.unix() - moment().unix());
       setWinnerKnownState(winnerKnownRefined);
+      //TODO: subscribe to the event so the buttons are get automatically updated
+      // if (moment().isAfter(timeToChooseWiners) && winnerKnownState == false) {
+      //   const listenerIfWinnerKnown = watchContractEvent(
+      //     {
+      //       abi: betCollector.abi,
+      //       address: address?.toString(),
+      //       eventName: "WinnerKnown",
+      //     },
+      //     event => {
+      //       //first event value contains if upper or lower bound won
+      //       setWinnerKnownState(true);
+      //       console.log("event: ", event);
+      //     },
+      //   );
+      // }
       if (winnerKnownRefined == true) {
         clearInterval(interval);
       }
@@ -122,15 +141,18 @@ export const BetItem = (props: { index: number | undefined }) => {
             <li className={`step ${winnerKnown ? "step-primary" : " "}`}>Rewards to claim</li>
           </ul>
           {/* <p>Address: {address}</p> */}
-          <p>Price: {price?.toString()}</p>
+          {/* <p>Price: {price?.toString()}</p> */}
           {/* <p>Exact time bet created: {timeBetCreated.unix()}</p>
           <p>Exact time left to bet: {timeToFinishBetting.unix()}</p> */}
-          <p>Time passed since creation: {timePassedSinceCreation}</p>
-          <p>Time left to bet: {timeLeftToFinishBetting}</p>
+          {/* <p>Time passed since creation: {timePassedSinceCreation}</p>
+          <p>Time left to bet: {timeLeftToFinishBetting}</p> */}
           {/* <p>Exact time left to choose winers: {timePriceUnveil?.toString()}</p> */}
           {/* <p>Time left to choose winers: {timeToChooseWiners?.toString()}</p> */}
           {/*TODO: use countdown to display time left*/}
-          {/* <Countdown timeFrom={moment()} milestoneTime={timeToFinishBetting} /> */}
+          <div className="mx-auto">
+            <Countdown milestoneTime={timeToFinishBetting} />
+          </div>
+
           <DynamicProgressBar
             value={timePassedSinceCreation}
             max={timeToFinishBetting.unix() - timeBetCreated.unix()}
@@ -142,9 +164,9 @@ export const BetItem = (props: { index: number | undefined }) => {
             Place bet
           </button>
           <button
-            className={`btn btn-primary ${moment().unix() >= timeToChooseWiners.unix() ? "" : "hidden"} ${
-              winnerKnownIsLoading || !write ? "btn-disabled" : ""
-            }`}
+            className={`btn btn-primary ${
+              moment().unix() >= timeToChooseWiners.unix() && winnerKnownRefined == false ? "" : "hidden"
+            } ${winnerKnownIsLoading || !write ? "btn-disabled" : ""}`}
             onClick={findWinnerHandler}
           >
             Choose winners

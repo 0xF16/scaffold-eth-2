@@ -19,7 +19,7 @@ export const NewBet = () => {
     contractName: "BetCollectorFactory",
     functionName: "clone",
     args: [
-      BigNumber.from(thresholdPrice),
+      BigNumber.from(thresholdPrice || 0),
       BigNumber.from(Math.floor(timeStop.valueOf() / 1000)),
       BigNumber.from(Math.floor(timeEval.valueOf() / 1000)),
     ],
